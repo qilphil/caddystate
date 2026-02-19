@@ -1,6 +1,4 @@
-'use strict';
-
-module.exports = {
+export default {
   PORT: process.env.PORT || 1240,
   CADDY_ADMIN_URL: process.env.CADDY_ADMIN_URL || 'http://127.0.0.1:1071',
   DB_PATH: process.env.DB_PATH || './db/caddystate.db',

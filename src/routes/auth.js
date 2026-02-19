@@ -1,11 +1,9 @@
-'use strict';
+import express from 'express';
+import bcrypt from 'bcrypt';
+import { logEvent } from '../middleware/logger.js';
+import { requireLogin } from '../middleware/auth.js';
 
-const express = require('express');
-const bcrypt = require('bcrypt');
-const { logEvent } = require('../middleware/logger');
-const { requireLogin } = require('../middleware/auth');
-
-module.exports = function (db) {
+export default function (db) {
   const router = express.Router();
 
   router.get('/login', (req, res) => {
@@ -78,4 +76,4 @@ module.exports = function (db) {
   });
 
   return router;
-};
+}

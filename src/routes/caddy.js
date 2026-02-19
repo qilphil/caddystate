@@ -1,11 +1,9 @@
-'use strict';
+import express from 'express';
+import { requireLogin, requireAdmin } from '../middleware/auth.js';
+import { logEvent } from '../middleware/logger.js';
+import * as caddy from '../services/caddy.js';
 
-const express = require('express');
-const { requireLogin, requireAdmin } = require('../middleware/auth');
-const { logEvent } = require('../middleware/logger');
-const caddy = require('../services/caddy');
-
-module.exports = function (db) {
+export default function (db) {
   const router = express.Router();
 
   router.use(requireLogin);
@@ -248,4 +246,4 @@ module.exports = function (db) {
   });
 
   return router;
-};
+}

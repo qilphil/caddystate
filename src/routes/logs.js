@@ -1,10 +1,8 @@
-'use strict';
+import express from 'express';
+import { requireAdmin } from '../middleware/auth.js';
+import { logEvent } from '../middleware/logger.js';
 
-const express = require('express');
-const { requireAdmin } = require('../middleware/auth');
-const { logEvent } = require('../middleware/logger');
-
-module.exports = function (db) {
+export default function (db) {
   const router = express.Router();
 
   router.use(requireAdmin);
@@ -81,4 +79,4 @@ module.exports = function (db) {
   });
 
   return router;
-};
+}

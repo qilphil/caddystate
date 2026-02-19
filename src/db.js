@@ -1,10 +1,8 @@
-'use strict';
-
-const Database = require('better-sqlite3');
-const bcrypt = require('bcrypt');
-const fs = require('fs');
-const path = require('path');
-const config = require('./config');
+import Database from 'better-sqlite3';
+import bcrypt from 'bcrypt';
+import fs from 'fs';
+import path from 'path';
+import config from './config.js';
 
 function randomPassword(length = 16) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -15,7 +13,7 @@ function randomPassword(length = 16) {
   return result;
 }
 
-function initDb() {
+export function initDb() {
   const dbPath = path.resolve(config.DB_PATH);
   const dbDir = path.dirname(dbPath);
 
@@ -66,5 +64,3 @@ function initDb() {
 
   return db;
 }
-
-module.exports = { initDb };

@@ -1,18 +1,20 @@
-'use strict';
+import { fileURLToPath } from 'url';
+import path from 'path';
+import express from 'express';
+import session from 'express-session';
+import BetterSqlite3StoreFactory from 'better-sqlite3-session-store';
 
-const express = require('express');
-const session = require('express-session');
-const path = require('path');
-const BetterSqlite3Store = require('better-sqlite3-session-store')(session);
+import config from './config.js';
+import { initDb } from './db.js';
 
-const config = require('./config');
-const { initDb } = require('./db');
+import authRoutes from './routes/auth.js';
+import dashboardRoutes from './routes/dashboard.js';
+import caddyRoutes from './routes/caddy.js';
+import userRoutes from './routes/users.js';
+import logRoutes from './routes/logs.js';
 
-const authRoutes = require('./routes/auth');
-const dashboardRoutes = require('./routes/dashboard');
-const caddyRoutes = require('./routes/caddy');
-const userRoutes = require('./routes/users');
-const logRoutes = require('./routes/logs');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const BetterSqlite3Store = BetterSqlite3StoreFactory(session);
 
 const db = initDb();
 const app = express();

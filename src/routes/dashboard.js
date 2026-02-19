@@ -1,10 +1,8 @@
-'use strict';
+import express from 'express';
+import { requireLogin } from '../middleware/auth.js';
+import * as caddy from '../services/caddy.js';
 
-const express = require('express');
-const { requireLogin } = require('../middleware/auth');
-const caddy = require('../services/caddy');
-
-module.exports = function (db) {
+export default function (db) {
   const router = express.Router();
 
   router.get('/', requireLogin, async (req, res) => {
@@ -49,4 +47,4 @@ module.exports = function (db) {
   });
 
   return router;
-};
+}

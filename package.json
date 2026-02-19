@@ -2,13 +2,14 @@
   "name": "caddystate",
   "version": "1.0.0",
   "description": "Caddy reverse proxy monitoring dashboard",
+  "type": "module",
   "engines": {
     "node": ">=18"
   },
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "pm2:start": "pm2 start ecosystem.config.js --env production",
+    "pm2:start": "pm2 start ecosystem.config.cjs --env production",
     "pm2:stop": "pm2 stop caddystate",
     "pm2:restart": "pm2 restart caddystate",
     "pm2:reload": "pm2 reload caddystate",

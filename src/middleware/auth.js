@@ -1,6 +1,4 @@
-'use strict';
-
-function requireLogin(req, res, next) {
+export function requireLogin(req, res, next) {
   if (req.session && req.session.user) {
     return next();
   }
@@ -8,7 +6,7 @@ function requireLogin(req, res, next) {
   res.redirect('/login');
 }
 
-function requireAdmin(req, res, next) {
+export function requireAdmin(req, res, next) {
   if (!req.session || !req.session.user) {
     req.session.returnTo = req.originalUrl;
     return res.redirect('/login');
@@ -22,5 +20,3 @@ function requireAdmin(req, res, next) {
   }
   next();
 }
-
-module.exports = { requireLogin, requireAdmin };

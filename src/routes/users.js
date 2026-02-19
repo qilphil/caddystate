@@ -1,14 +1,12 @@
-'use strict';
+import express from 'express';
+import bcrypt from 'bcrypt';
+import fs from 'fs';
+import path from 'path';
+import { requireAdmin } from '../middleware/auth.js';
+import { logEvent } from '../middleware/logger.js';
+import config from '../config.js';
 
-const express = require('express');
-const bcrypt = require('bcrypt');
-const fs = require('fs');
-const path = require('path');
-const { requireAdmin } = require('../middleware/auth');
-const { logEvent } = require('../middleware/logger');
-const config = require('../config');
-
-module.exports = function (db) {
+export default function (db) {
   const router = express.Router();
 
   router.use(requireAdmin);
@@ -210,4 +208,4 @@ module.exports = function (db) {
   });
 
   return router;
-};
+}
