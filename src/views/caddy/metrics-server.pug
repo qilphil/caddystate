@@ -1,0 +1,201 @@
+extends ../layout
+
+block content
+  .d-flex.justify-content-between.align-items-center.mb-4
+    h1
+      | Server:
+      code= serverName
+    a.btn.btn-outline-secondary.btn-sm(href='/caddy/metrics') ← Back to Metrics
+
+  if error
+    .alert.alert-warning= error
+
+  else if server
+
+    //- ── OVERVIEW CARDS ───────────────────────────────────────────────────
+    .row.g-3.mb-4
+      .col-sm-4
+        .card.h-100
+          .card-header.fw-bold Listen Addresses
+          ul.list-group.list-group-flush
+            each addr in (server.listen || [])
+              li.list-group-item.py-1
+                code= addr
+      .col-sm-4
+        .card.h-100
+          .card-header.fw-bold Protocols
+          .card-body
+            - const protoList = (server.protocols || []).length ? server.protocols : ['h1', 'h2']
+            each p in protoList
+              span.badge.bg-secondary.me-2.fs-6= p
+      .col-sm-4
+        .card.h-100.text-center
+          .card-header.fw-bold Routes
+          .card-body.d-flex.align-items-center.justify-content-center
+            p.display-4.mb-0= (server.routes || []).length
+
+    //- ── AUTOMATIC HTTPS ──────────────────────────────────────────────────
+    if server.automatic_https
+      h5.mt-3 Automatic HTTPS
+      table.table.table-sm.table-bordered(style='max-width:460px')
+        tbody
+          tr
+            th Enabled
+            td= server.automatic_https.disable ? 'No' : 'Yes'
+          tr
+            th Redirects
+            td= server.automatic_https.disable_redirects ? 'Disabled' : 'Enabled'
+          if server.automatic_https.skip && server.automatic_https.skip.length
+            tr
+              th Skipped Domains
+              td
+                each d in server.automatic_https.skip
+                  code.d-block= d
+          if server.automatic_https.skip_certificates && server.automatic_https.skip_certificates.length
+            tr
+              th Skip Certificates
+              td
+                each d in server.automatic_https.skip_certificates
+                  code.d-block= d
+
+    //- ── TIMEOUTS ─────────────────────────────────────────────────────────
+    if server.timeouts
+      h5.mt-3 Timeouts
+      table.table.table-sm.table-bordered(style='max-width:400px')
+        tbody
+          if server.timeouts.read_body
+            tr
+              th Read Body
+              td
+                code= server.timeouts.read_body
+          if server.timeouts.read_header
+            tr
+              th Read Header
+              td
+                code= server.timeouts.read_header
+          if server.timeouts.write
+            tr
+              th Write
+              td
+                code= server.timeouts.write
+          if server.timeouts.idle
+            tr
+              th Idle
+              td
+                code= server.timeouts.idle
+
+    //- ── TLS CONNECTION POLICIES ──────────────────────────────────────────
+    if server.tls_connection_policies && server.tls_connection_policies.length
+      h5.mt-3 TLS Connection Policies
+      each policy, idx in server.tls_connection_policies
+        .card.mb-2
+          .card-header.py-1
+            small.fw-bold Policy #{idx + 1}
+          .card-body.py-2
+            .row.g-2
+              if policy.match
+                .col-12
+                  small.text-muted Match
+                  if policy.match.sni && policy.match.sni.length
+                    div
+                      each sni in policy.match.sni
+                        span.badge.bg-info.text-dark.me-1= sni
+                  else
+                    div
+                      span.text-muted catch-all
+              if policy.protocol_min || policy.protocol_max
+                .col-md-6
+                  small.text-muted TLS Versions
+                  div
+                    code= [policy.protocol_min, policy.protocol_max].filter(Boolean).join(' – ')
+              if policy.alpn && policy.alpn.length
+                .col-md-6
+                  small.text-muted ALPN Protocols
+                  div
+                    each a in policy.alpn
+                      span.badge.bg-secondary.me-1= a
+              if policy.cipher_suites && policy.cipher_suites.length
+                .col-12
+                  small.text-muted Cipher Suites
+                  div
+                    each c in policy.cipher_suites
+                      code.me-2.small= c
+              if policy.curves && policy.curves.length
+                .col-md-6
+                  small.text-muted Elliptic Curves
+                  div
+                    each c in policy.curves
+                      code.me-2= c
+              if policy.client_authentication
+                .col-12
+                  small.text-muted Client Authentication
+                  div
+                    code= policy.client_authentication.mode || JSON.stringify(policy.client_authentication)
+
+    //- ── ACCESS LOGS ──────────────────────────────────────────────────────
+    if server.logs
+      h5.mt-3 Access Logs
+      if server.logs.default_logger_name
+        p
+          small.text-muted Default logger:
+          code= server.logs.default_logger_name
+      if server.logs.logger_names
+        .table-responsive
+          table.table.table-sm.table-bordered(style='max-width:500px')
+            thead.table-secondary
+              tr
+                th Host
+                th Logger
+            tbody
+              each loggerName, host in server.logs.logger_names
+                tr
+                  td
+                    code= host
+                  td
+                    code= loggerName
+
+    //- ── ROUTES ───────────────────────────────────────────────────────────
+    .d-flex.justify-content-between.align-items-center.mt-3.mb-2
+      h5.mb-0 Routes (#{(server.routes || []).length})
+      a.btn.btn-outline-secondary.btn-sm(href='/caddy/routes') Full routes page →
+    if routes.length === 0
+      p.text-muted No routes configured.
+    else
+      .table-responsive
+        table.table.table-striped.table-hover.table-sm
+          thead.table-dark
+            tr
+              th #
+              th Matchers
+              th Handlers
+              th Upstreams
+          tbody
+            each item in routes
+              tr
+                td= item.index + 1
+                td
+                  if item.route.match && item.route.match.length
+                    each m in item.route.match
+                      div
+                        if m.host
+                          each host in m.host
+                            span.badge.bg-secondary.me-1= `host: ${host}`
+                        if m.path
+                          span.badge.bg-info.text-dark.me-1= `path: ${m.path.join(', ')}`
+                        if m.method
+                          span.badge.bg-warning.text-dark.me-1= `method: ${m.method.join(', ')}`
+                        if m.header
+                          span.badge.bg-light.text-dark.border.me-1 header match
+                        if m.not
+                          span.badge.bg-danger.me-1 NOT
+                  else
+                    span.text-muted catch-all
+                td
+                  each h in (item.route.handle || [])
+                    code.me-2= h.handler
+                td
+                  each dial in (item.upstreams || [])
+                    span.badge.bg-success.me-1= dial
+
+  else
+    p.text-muted Server not found.

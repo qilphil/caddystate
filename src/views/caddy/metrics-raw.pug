@@ -1,0 +1,16 @@
+extends ../layout
+
+block content
+  .d-flex.justify-content-between.align-items-center.mb-4
+    h1 Raw Config
+    a.btn.btn-outline-secondary.btn-sm(href='/caddy/metrics') ← Back to Metrics
+
+  if error
+    .alert.alert-warning
+      strong Caddy unreachable:
+      |  #{error}
+  else if config
+    p.text-muted Complete Caddy configuration JSON as returned by the admin API.
+    pre.bg-light.border.rounded.p-3(style='max-height:80vh; overflow:auto; font-size:0.78rem;')= config
+  else
+    p.text-muted No data available.

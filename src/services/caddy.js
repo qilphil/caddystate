@@ -118,10 +118,62 @@ async function deleteRouteByIndex(serverName, routeIndex) {
   return caddyRequest('PUT', `/config/apps/http/servers/${serverName}/routes`, routes);
 }
 
+async function getPrometheusMetrics() {
+  try {
+    const res = await fetch(`${BASE}/metrics`);
+    if (!res.ok) return { error: `HTTP ${res.status}`, data: null };
+    const text = await res.text();
+    return { error: null, data: text };
+  } catch (err) {
+    return { error: err.message, data: null };
+  }
+}
+
+// Parse Prometheus text-format into { metricName: { help, type, samples: [{labels, value}] } }
+function parsePrometheusText(text) {
+  const metrics = {};
+  if (!text) return metrics;
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    if (!t) continue;
+    if (t.startsWith('# HELP ')) {
+      const m = t.match(/^# HELP (\S+)\s+(.+)$/);
+      if (m) {
+        if (!metrics[m[1]]) metrics[m[1]] = { help: '', type: '', samples: [] };
+        metrics[m[1]].help = m[2];
+      }
+    } else if (t.startsWith('# TYPE ')) {
+      const m = t.match(/^# TYPE (\S+)\s+(\S+)$/);
+      if (m) {
+        if (!metrics[m[1]]) metrics[m[1]] = { help: '', type: '', samples: [] };
+        metrics[m[1]].type = m[2];
+      }
+    } else if (!t.startsWith('#')) {
+      const m = t.match(/^([^{}\s]+)(\{[^}]*\})?\s+(\S+)/);
+      if (m) {
+        const name = m[1];
+        const labelsStr = m[2] || '';
+        const value = m[3];
+        const labels = {};
+        if (labelsStr) {
+          const re = /(\w+)="([^"]*)"/g;
+          let lm;
+          while ((lm = re.exec(labelsStr)) !== null) labels[lm[1]] = lm[2];
+        }
+        if (!metrics[name]) metrics[name] = { help: '', type: '', samples: [] };
+        metrics[name].samples.push({ labels, value });
+      }
+    }
+  }
+  return metrics;
+}
+
 module.exports = {
   getFullConfig,
   getServers,
   getUpstreams,
+  getPrometheusMetrics,
+  parsePrometheusText,
   reloadConfig,
   tcpCheck,
   extractRoutes,

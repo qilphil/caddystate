@@ -1,14 +1,287 @@
 extends ../layout
 
 block content
-  h1.mb-4 Caddy Config / Metrics
+  - const reachable = !error && config != null
+
+  .d-flex.justify-content-between.align-items-center.mb-1
+    h1 Caddy Metrics
+    a.btn.btn-outline-secondary.btn-sm(href='/caddy/metrics/raw') Raw Config JSON →
+  p.text-muted.mb-4 Live data from the Caddy admin API.
+
+  //- Summary cards
+  .row.g-3.mb-4
+    .col-6.col-lg-3
+      .card.h-100.text-center
+        .card-body.d-flex.flex-column.justify-content-center
+          h6.card-title.text-muted Caddy
+          if reachable
+            span.badge.bg-success.fs-6 Online
+          else
+            span.badge.bg-danger.fs-6 Unreachable
+    .col-6.col-lg-3
+      .card.h-100.text-center
+        .card-body.d-flex.flex-column.justify-content-center
+          h6.card-title.text-muted HTTP Servers
+          p.display-5.mb-0= serverList.length
+    .col-6.col-lg-3
+      .card.h-100.text-center
+        .card-body.d-flex.flex-column.justify-content-center
+          h6.card-title.text-muted Total Routes
+          p.display-5.mb-0= totalRoutes
+    .col-6.col-lg-3
+      .card.h-100.text-center
+        .card-body.d-flex.flex-column.justify-content-center
+          h6.card-title.text-muted Upstreams
+          if upstreams.length
+            p.display-5.mb-0
+              span(class=healthyUpstreams === upstreams.length ? 'text-success' : 'text-warning')= healthyUpstreams
+              span.text-muted.fs-6= ` / ${upstreams.length}`
+          else
+            p.display-5.mb-0.text-muted —
 
   if error
-    .alert.alert-warning
+    .alert.alert-warning.mb-4
       strong Caddy unreachable:
       |  #{error}
-  else if config
-    p.text-muted Raw configuration JSON returned by the Caddy admin API.
-    pre.bg-light.border.rounded.p-3(style='max-height:600px; overflow:auto; font-size:0.78rem;')= config
-  else
-    p.text-muted No data available.
+
+  if reachable
+
+    //- ── HTTP SERVERS ─────────────────────────────────────────────────────
+    if serverList.length
+      h4.mt-4.mb-3 HTTP Servers
+      .table-responsive
+        table.table.table-striped.table-hover.table-sm.sortable
+          thead.table-dark
+            tr
+              th Server
+              th Listen Addresses
+              th Routes
+              th Protocols
+              th TLS Policies
+              th
+          tbody
+            each s in serverList
+              tr
+                td
+                  code= s.name
+                td
+                  each addr in s.listen
+                    code.d-block.me-1= addr
+                td= s.routeCount
+                td
+                  - const protoList = s.protocols.length ? s.protocols : ['h1', 'h2']
+                  each p in protoList
+                    span.badge.bg-secondary.me-1= p
+                td= s.tlsPoliciesCount || '—'
+                td
+                  a.btn.btn-outline-primary.btn-sm(href=`/caddy/metrics/server/${s.name}`) Detail →
+
+    //- ── UPSTREAMS ────────────────────────────────────────────────────────
+    .d-flex.justify-content-between.align-items-center.mt-4.mb-3
+      h4.mb-0 Upstreams
+      a.btn.btn-outline-secondary.btn-sm(href='/caddy/upstreams') Standalone page →
+    if upstreams.length === 0
+      p.text-muted No upstream data available.
+    else
+      .table-responsive
+        table.table.table-striped.table-hover.table-sm.sortable
+          thead.table-dark
+            tr
+              th Address
+              th Active Req
+              th Total Req
+              th Fails
+              th Health
+          tbody
+            each u in upstreams
+              tr
+                td
+                  code= u.address
+                td= u.num_requests !== undefined ? u.num_requests : '—'
+                td= u.total_requests !== undefined ? u.total_requests : '—'
+                td= u.fails !== undefined ? u.fails : '—'
+                td
+                  if u.healthy === false
+                    span.badge.bg-danger DOWN
+                  else
+                    span.badge.bg-success UP
+
+    //- ── TLS AUTOMATION ───────────────────────────────────────────────────
+    if tlsPolicies && tlsPolicies.length
+      h4.mt-4.mb-3 TLS Automation
+      .table-responsive
+        table.table.table-striped.table-hover.table-sm
+          thead.table-dark
+            tr
+              th #
+              th Subjects
+              th Issuers
+              th Key Type
+          tbody
+            each policy, idx in tlsPolicies
+              tr
+                td= idx + 1
+                td
+                  if policy.subjects && policy.subjects.length
+                    each subj in policy.subjects
+                      span.badge.bg-info.text-dark.me-1= subj
+                  else
+                    span.text-muted catch-all
+                td
+                  if policy.issuers && policy.issuers.length
+                    each issuer in policy.issuers
+                      - const issuerLabel = (typeof issuer === 'string') ? issuer : (issuer.module || JSON.stringify(issuer))
+                      span.badge.bg-secondary.me-1= issuerLabel
+                  else
+                    span.text-muted default
+                td= policy.key_type || '—'
+
+    //- ── PKI ──────────────────────────────────────────────────────────────
+    if pkiCAs
+      h4.mt-4.mb-3 PKI Certificate Authorities
+      each ca, caName in pkiCAs
+        .card.mb-3
+          .card-header
+            strong= caName
+            if ca.name
+              span.text-muted.ms-2= ca.name
+          .card-body.py-2
+            .row.g-2
+              if ca.root_common_name
+                .col-md-6
+                  small.text-muted Root CN
+                  div
+                    code= ca.root_common_name
+              if ca.intermediate_common_name
+                .col-md-6
+                  small.text-muted Intermediate CN
+                  div
+                    code= ca.intermediate_common_name
+              if ca.install_trust !== undefined
+                .col-md-6
+                  small.text-muted Install in System Trust Store
+                  div= ca.install_trust ? 'Yes' : 'No'
+
+    //- ── LOGGING ──────────────────────────────────────────────────────────
+    if loggingLogs
+      h4.mt-4.mb-3 Logging
+      .table-responsive
+        table.table.table-striped.table-hover.table-sm
+          thead.table-dark
+            tr
+              th Logger
+              th Level
+              th Writer
+              th Encoder
+          tbody
+            each log, name in loggingLogs
+              tr
+                td
+                  code= name
+                td= (log.level || 'INFO').toUpperCase()
+                td
+                  if log.writer
+                    code= log.writer.output || JSON.stringify(log.writer)
+                  else
+                    span.text-muted default (stderr)
+                td
+                  if log.encoder
+                    code= log.encoder.format || JSON.stringify(log.encoder)
+                  else
+                    span.text-muted default (console)
+
+    //- ── ADMIN CONFIG ─────────────────────────────────────────────────────
+    if adminConfig
+      h4.mt-4.mb-3 Admin API
+      table.table.table-sm.table-bordered(style='max-width:500px')
+        tbody
+          tr
+            th(scope='row') Listen
+            td
+              code= adminConfig.listen || '127.0.0.1:2019'
+          if adminConfig.disabled !== undefined
+            tr
+              th(scope='row') Disabled
+              td= adminConfig.disabled ? 'Yes' : 'No'
+          if adminConfig.enforce_origin !== undefined
+            tr
+              th(scope='row') Enforce Origin
+              td= adminConfig.enforce_origin ? 'Yes' : 'No'
+          if adminConfig.origins && adminConfig.origins.length
+            tr
+              th(scope='row') Allowed Origins
+              td
+                each origin in adminConfig.origins
+                  code.d-block= origin
+
+    //- ── PROMETHEUS METRICS ───────────────────────────────────────────────
+    if promGroups && promGroups.length
+      .d-flex.justify-content-between.align-items-center.mt-4.mb-2
+        h4.mb-0 Prometheus Metrics
+        small.text-muted
+          code /metrics
+      .accordion#promAccordion
+        each group in promGroups
+          .accordion-item
+            h2.accordion-header(id=`prom-heading-${group.id}`)
+              button.accordion-button.collapsed(
+                type='button'
+                data-bs-toggle='collapse'
+                data-bs-target=`#prom-collapse-${group.id}`
+                aria-expanded='false'
+                aria-controls=`prom-collapse-${group.id}`
+              )
+                strong= group.label
+                span.badge.bg-secondary.ms-2= group.metrics.length + ' metrics'
+            .accordion-collapse.collapse(
+              id=`prom-collapse-${group.id}`
+              aria-labelledby=`prom-heading-${group.id}`
+            )
+              .accordion-body.p-0
+                table.table.table-sm.table-striped.mb-0
+                  thead.table-secondary
+                    tr
+                      th(style='width:45%') Metric
+                      th(style='width:8%') Type
+                      th Value(s)
+                  tbody
+                    each metric in group.metrics
+                      if metric.simple
+                        tr
+                          td
+                            code.small= metric.name
+                            if metric.help
+                              br
+                              small.text-muted= metric.help
+                          td
+                            span.badge.bg-light.text-dark.border= metric.type || '—'
+                          td
+                            code= metric.samples[0].value
+                      else
+                        tr.table-light
+                          td(colspan='3')
+                            .d-flex.align-items-baseline.gap-2.py-1
+                              code.small.fw-bold= metric.name
+                              span.badge.bg-light.text-dark.border= metric.type || '—'
+                              if metric.help
+                                small.text-muted= metric.help
+                        each sample in metric.samples
+                          tr
+                            td.ps-4
+                              each val, key in sample.labels
+                                span.badge.bg-secondary.me-1.small= `${key}=${val}`
+                              if !Object.keys(sample.labels).length
+                                span.text-muted.small (no labels)
+                            td
+                            td
+                              code.small= sample.value
+
+    else if promError
+      h4.mt-4.mb-2 Prometheus Metrics
+      .alert.alert-light.border
+        | Prometheus endpoint unavailable:
+        code.ms-2= promError
+
+    //- ── RAW CONFIG LINK ──────────────────────────────────────────────────
+    .mt-5.pb-3
+      a.btn.btn-outline-secondary(href='/caddy/metrics/raw') View Full Raw Config JSON →
