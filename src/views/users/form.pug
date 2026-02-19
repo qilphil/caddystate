@@ -1,0 +1,32 @@
+extends ../layout
+
+block content
+  h1.mb-4= editUser ? 'Edit User' : 'New User'
+
+  .card
+    .card-body
+      form(action=editUser ? `/users/${editUser.id}` : '/users', method='POST')
+        .mb-3
+          label.form-label Username
+          if editUser
+            input.form-control(type='text', value=editUser.username, disabled)
+          else
+            input.form-control(type='text', name='username', required, minlength='3', maxlength='32', pattern='[a-zA-Z0-9_\\-]+', autocomplete='off')
+            .form-text 3–32 characters: letters, digits, _ or -
+        .mb-3
+          label.form-label(for='password')
+            if editUser
+              | Password
+              span.text-muted.ms-1 (leave blank to keep unchanged)
+            else
+              | Password
+          input#password.form-control(type='password', name='password', minlength='8', required=(!editUser), autocomplete='new-password')
+          .form-text Minimum 8 characters
+        .mb-3
+          label.form-label Role
+          select.form-select(name='role')
+            option(value='user', selected=!editUser || editUser.role === 'user') User
+            option(value='admin', selected=editUser && editUser.role === 'admin') Admin
+        .d-flex.gap-2
+          button.btn.btn-primary(type='submit')= editUser ? 'Save Changes' : 'Create User'
+          a.btn.btn-secondary(href='/users') Cancel

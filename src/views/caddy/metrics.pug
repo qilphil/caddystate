@@ -1,0 +1,14 @@
+extends ../layout
+
+block content
+  h1.mb-4 Caddy Config / Metrics
+
+  if error
+    .alert.alert-warning
+      strong Caddy unreachable:
+      |  #{error}
+  else if config
+    p.text-muted Raw configuration JSON returned by the Caddy admin API.
+    pre.bg-light.border.rounded.p-3(style='max-height:600px; overflow:auto; font-size:0.78rem;')= config
+  else
+    p.text-muted No data available.

@@ -1,0 +1,42 @@
+extends ../layout
+
+block content
+  .d-flex.justify-content-between.align-items-center.mb-4
+    h1 User Management
+    a.btn.btn-primary(href='/users/new') + New User
+
+  if credFileExists
+    .alert.alert-warning.d-flex.justify-content-between.align-items-center
+      span
+        strong admin-credentials.env exists.
+        |  Delete it after you have noted the admin password.
+      form(action='/users/delete-credentials', method='POST')
+        button.btn.btn-sm.btn-danger(type='submit', onclick="return confirm('Permanently delete the credentials file?')") Delete File
+
+  .table-responsive
+    table.table.table-striped.table-hover.table-sm.sortable
+      thead.table-dark
+        tr
+          th ID
+          th Username
+          th Role
+          th Created
+          th Last Login
+          th(data-nosort) Actions
+      tbody
+        each u in users
+          tr
+            td= u.id
+            td= u.username
+            td
+              if u.role === 'admin'
+                span.badge.bg-danger admin
+              else
+                span.badge.bg-secondary user
+            td= u.created_at
+            td= u.last_login || '—'
+            td
+              a.btn.btn-sm.btn-outline-secondary.me-1(href=`/users/${u.id}/edit`) Edit
+              if u.id !== user.id
+                form(action=`/users/${u.id}/delete`, method='POST', class='d-inline')
+                  button.btn.btn-sm.btn-outline-danger(type='submit', onclick="return confirm('Delete user ' + '#{u.username}' + '?')") Delete

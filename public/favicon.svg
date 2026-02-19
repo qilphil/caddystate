@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>CaddyState</title>
+  <rect width="32" height="32" rx="6" fill="#1c1f23"/>
+  <path d="M18 10A8.5 8.5 0 1 0 18 22"
+        stroke="#20c997" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M15 16h9M21 13l3.5 3-3.5 3"
+        stroke="#0dcaf0" stroke-width="2" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

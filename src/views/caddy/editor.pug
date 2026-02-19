@@ -1,0 +1,72 @@
+extends ../layout
+
+block content
+  .d-flex.justify-content-between.align-items-center.mb-4
+    h1 Config Editor
+    form(action='/caddy/reload', method='POST')
+      button.btn.btn-warning(type='submit', onclick="return confirm('Reload Caddy config now?')")
+        | ↺ Reload Caddy
+
+  if error
+    .alert.alert-warning
+      strong Caddy unreachable:
+      |  #{error}
+
+  h5.mb-3 Current Routes
+  if routes.length === 0
+    p.text-muted No routes configured.
+  else
+    .table-responsive.mb-4
+      table.table.table-striped.table-hover.table-sm
+        thead.table-dark
+          tr
+            th Server
+            th Matchers
+            th Handler
+            th Upstreams
+            th
+        tbody
+          each item in routes
+            tr
+              td
+                code= item.serverName
+              td
+                if item.route.match && item.route.match.length
+                  each m in item.route.match
+                    div
+                      if m.host
+                        span.badge.bg-secondary.me-1 host: #{m.host.join(', ')}
+                      if m.path
+                        span.badge.bg-info.text-dark.me-1 path: #{m.path.join(', ')}
+                else
+                  span.text-muted catch-all
+              td
+                each h in (item.route.handle || [])
+                  code.me-2= h.handler
+              td
+                each dial in (item.upstreams || [])
+                  span.badge.bg-success.me-1= dial
+              td
+                form(action=`/caddy/routes/${item.serverName}/${item.index}/delete`, method='POST', class='d-inline')
+                  button.btn.btn-danger.btn-sm(type='submit', onclick="return confirm('Delete this route?')") Delete
+
+  h5.mb-3 Add Route
+  .card
+    .card-body
+      form(action='/caddy/routes/add', method='POST')
+        .row.g-3
+          .col-md-4
+            label.form-label Host matcher
+            input.form-control(type='text', name='matchHost', placeholder='example.com')
+            .form-text Leave blank for any host
+          .col-md-4
+            label.form-label Path matcher
+            input.form-control(type='text', name='matchPath', placeholder='/api/*')
+            .form-text Leave blank for any path
+          .col-md-4
+            label.form-label
+              | Upstream address
+              span.text-danger *
+            input.form-control(type='text', name='upstream', placeholder='localhost:8080', required)
+        .mt-3
+          button.btn.btn-primary(type='submit') Add Route

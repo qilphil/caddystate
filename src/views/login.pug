@@ -1,0 +1,18 @@
+extends layout
+
+block content
+  .row.justify-content-center
+    .col-md-4
+      .card.shadow-sm
+        .card-header.fw-bold Login to CaddyState
+        .card-body
+          if flash
+            .alert(class='alert-' + flash.type, role='alert')= flash.message
+          form(action='/login', method='POST')
+            .mb-3
+              label.form-label(for='username') Username
+              input#username.form-control(type='text', name='username', required, autofocus, autocomplete='username')
+            .mb-3
+              label.form-label(for='password') Password
+              input#password.form-control(type='password', name='password', required, autocomplete='current-password')
+            button.btn.btn-primary.w-100(type='submit') Login

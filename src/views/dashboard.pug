@@ -1,0 +1,56 @@
+extends layout
+
+block content
+  h1.mb-4 Dashboard
+
+  .row.g-4.mb-4
+    .col-md-3
+      .card.text-center.h-100
+        .card-body.d-flex.flex-column.justify-content-center
+          h6.card-title.text-muted Caddy Status
+          if caddyReachable
+            span.badge.bg-success.fs-6 Online
+          else
+            span.badge.bg-danger.fs-6 Unreachable
+    .col-md-3
+      .card.text-center.h-100
+        .card-body.d-flex.flex-column.justify-content-center
+          h6.card-title.text-muted Routes
+          p.display-5.mb-0= routeCount
+    .col-md-3
+      .card.text-center.h-100
+        .card-body.d-flex.flex-column.justify-content-center
+          h6.card-title.text-muted Upstreams Up
+          p.display-5.mb-0.text-success= upstreamStats.up
+    .col-md-3
+      .card.text-center.h-100
+        .card-body.d-flex.flex-column.justify-content-center
+          h6.card-title.text-muted Upstreams Down
+          p.display-5.mb-0.text-danger= upstreamStats.down
+
+  h4.mt-2.mb-3 Recent Events
+  if recentLogs.length
+    .table-responsive
+      table.table.table-striped.table-hover.table-sm
+        thead.table-dark
+          tr
+            th Timestamp
+            th User
+            th Action
+            th Status
+            th Detail
+        tbody
+          each log in recentLogs
+            tr
+              td= log.timestamp
+              td= log.username || '—'
+              td
+                code= log.action
+              td
+                if log.status === 'SUCCESS'
+                  span.badge.bg-success SUCCESS
+                else
+                  span.badge.bg-danger FAILURE
+              td.text-truncate(style='max-width:200px', title=log.detail)= log.detail || '—'
+  else
+    p.text-muted No recent events.

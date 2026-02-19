@@ -1,0 +1,76 @@
+extends ../layout
+
+block content
+  h1.mb-4 Event Log
+
+  .card.mb-4
+    .card-body
+      form(action='/logs', method='GET')
+        .row.g-3
+          .col-md-2
+            label.form-label Username
+            input.form-control.form-control-sm(type='text', name='username', value=filters.username, placeholder='Filter…')
+          .col-md-2
+            label.form-label Action
+            select.form-select.form-select-sm(name='action')
+              option(value='') All actions
+              each a in actions
+                option(value=a, selected=filters.action === a)= a
+          .col-md-2
+            label.form-label Status
+            select.form-select.form-select-sm(name='status')
+              option(value='') All
+              option(value='SUCCESS', selected=filters.status === 'SUCCESS') SUCCESS
+              option(value='FAILURE', selected=filters.status === 'FAILURE') FAILURE
+          .col-md-2
+            label.form-label From
+            input.form-control.form-control-sm(type='date', name='from', value=filters.from)
+          .col-md-2
+            label.form-label To
+            input.form-control.form-control-sm(type='date', name='to', value=filters.to)
+          .col-md-2.d-flex.align-items-end
+            button.btn.btn-primary.btn-sm.w-100(type='submit') Filter
+
+  p.text-muted.small #{total} event(s) found.
+
+  if logs.length === 0
+    p.text-muted No events match the current filter.
+  else
+    .table-responsive
+      table.table.table-striped.table-hover.table-sm
+        thead.table-dark
+          tr
+            th Timestamp
+            th User
+            th Action
+            th Target
+            th Status
+            th Detail
+            th IP
+        tbody
+          each log in logs
+            tr
+              td.text-nowrap= log.timestamp
+              td= log.username || '—'
+              td
+                code= log.action
+              td= log.target || '—'
+              td
+                if log.status === 'SUCCESS'
+                  span.badge.bg-success SUCCESS
+                else
+                  span.badge.bg-danger FAILURE
+              td.text-truncate(style='max-width:180px', title=log.detail)= log.detail || '—'
+              td= log.ip || '—'
+
+  if totalPages > 1
+    nav(aria-label='Log pagination')
+      ul.pagination.justify-content-center.mt-3
+        - var base = `/logs?username=${filters.username}&action=${filters.action}&status=${filters.status}&from=${filters.from}&to=${filters.to}&page=`
+        li.page-item(class=currentPage === 1 ? 'disabled' : '')
+          a.page-link(href=base + (currentPage - 1)) &laquo;
+        each p in Array.from({length: totalPages}, (_, i) => i + 1)
+          li.page-item(class=p === currentPage ? 'active' : '')
+            a.page-link(href=base + p)= p
+        li.page-item(class=currentPage === totalPages ? 'disabled' : '')
+          a.page-link(href=base + (currentPage + 1)) &raquo;

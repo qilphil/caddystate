@@ -1,0 +1,34 @@
+extends ../layout
+
+block content
+  h1.mb-4 Caddy Upstreams
+
+  if error
+    .alert.alert-warning
+      strong Caddy unreachable:
+      |  #{error}
+  else if upstreams.length === 0
+    p.text-muted No upstreams reported by Caddy.
+  else
+    .table-responsive
+      table.table.table-striped.table-hover.table-sm.sortable
+        thead.table-dark
+          tr
+            th Address
+            th Active Requests
+            th Total Requests
+            th Fails
+            th Status
+        tbody
+          each u in upstreams
+            tr
+              td
+                code= u.address
+              td= u.num_requests !== undefined ? u.num_requests : '—'
+              td= u.total_requests !== undefined ? u.total_requests : '—'
+              td= u.fails !== undefined ? u.fails : '—'
+              td
+                if u.healthy === false
+                  span.badge.bg-danger DOWN
+                else
+                  span.badge.bg-success UP

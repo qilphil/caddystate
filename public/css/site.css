@@ -1,0 +1,39 @@
+body {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.table th {
+  white-space: nowrap;
+}
+
+th.sort-col {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sort-col::after {
+  content: ' \2195';
+  opacity: 0.4;
+  font-size: 0.75em;
+}
+
+th[data-sort-dir='asc']::after {
+  content: ' \2191';
+  opacity: 1;
+}
+
+th[data-sort-dir='desc']::after {
+  content: ' \2193';
+  opacity: 1;
+}
