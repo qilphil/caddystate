@@ -1,42 +1,51 @@
 extends ../layout
 
 block content
-  h1.mb-4 Caddy Routes
+  .split-wrapper(data-link-class='route-link')
+    .split-table-pane
+      h1.mb-4 Caddy Routes
 
-  if error
-    .alert.alert-warning
-      strong Caddy unreachable:
-      |  #{error}
-  else if routes.length === 0
-    p.text-muted No routes configured.
-  else
-    .table-responsive
-      table.table.table-striped.table-hover.table-sm.sortable
-        thead.table-dark
-          tr
-            th Server
-            th Matchers
-            th Handler
-            th Upstreams
-        tbody
-          each item in routes
-            tr
-              td
-                code= item.serverName
-              td
-                if item.route.match && item.route.match.length
-                  each m in item.route.match
-                    div
-                      if m.host
-                        each host in m.host
-                          a.badge.bg-secondary.me-1(href=`https://${host}` target='_blank' rel='noopener noreferrer')= `host: ${host}`
-                      if m.path
-                        span.badge.bg-info.text-dark.me-1 path: #{m.path.join(', ')}
-                else
-                  span.text-muted catch-all
-              td
-                each h in (item.route.handle || [])
-                  code.me-2= h.handler
-              td
-                each dial in (item.upstreams || [])
-                  span.badge.bg-success.me-1= dial
+      if error
+        .alert.alert-warning
+          strong Caddy unreachable:
+          |  #{error}
+      else if routes.length === 0
+        p.text-muted No routes configured.
+      else
+        .table-responsive
+          table.table.table-striped.table-hover.table-sm.sortable
+            thead.table-dark
+              tr
+                th Server
+                th Matchers
+                th Handler
+                th Upstreams
+            tbody
+              each item in routes
+                tr
+                  td
+                    code= item.serverName
+                  td
+                    if item.route.match && item.route.match.length
+                      each m in item.route.match
+                        div
+                          if m.host
+                            each host in m.host
+                              a.badge.bg-secondary.me-1.route-link(href=`https://${host}`)= `host: ${host}`
+                          if m.path
+                            span.badge.bg-info.text-dark.me-1 path: #{m.path.join(', ')}
+                    else
+                      span.text-muted catch-all
+                  td
+                    each h in (item.route.handle || [])
+                      code.me-2= h.handler
+                  td
+                    each dial in (item.upstreams || [])
+                      span.badge.bg-success.me-1= dial
+
+    .split-preview
+      button.split-preview-close(type='button', aria-label='Close preview') ×
+      iframe.split-preview-iframe(src='about:blank', title='Route preview')
+
+block scripts
+  script(src='/public/js/split-preview.js')

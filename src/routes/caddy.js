@@ -40,6 +40,22 @@ export default function (db) {
       }
     }
 
+    // Build map: upstream address → full href (respecting https transport)
+    const protoMap = servers ? caddy.extractTransportProtocols(servers) : {};
+    const hrefMap = {};
+    for (const u of (Array.isArray(upstreams) ? upstreams : [])) {
+      const addr = u.address;
+      if (!addr) continue;
+      const schemeMatch = addr.match(/^(\w+):\/\/(.*)/);
+      if (schemeMatch) {
+        const proto = schemeMatch[1] === 'https' ? 'https' : 'http';
+        hrefMap[addr] = `${proto}://${schemeMatch[2]}`;
+      } else {
+        const proto = protoMap[addr] || 'http';
+        hrefMap[addr] = `${proto}://${addr}`;
+      }
+    }
+
     const flash = req.session.flash;
     delete req.session.flash;
     res.render('caddy/upstreams', {
@@ -47,9 +63,38 @@ export default function (db) {
       user: req.session.user,
       upstreams: Array.isArray(upstreams) ? upstreams : [],
       routeMap,
+      hrefMap,
       error,
       flash,
     });
+  });
+
+  router.get('/upstream-check', async (req, res) => {
+    const addr = req.query.addr;
+    if (!addr || !/^[a-zA-Z0-9._-]+(:\d+)?$/.test(addr)) {
+      return res.status(400).json({ error: 'INVALID' });
+    }
+
+    const proto = req.query.proto === 'https' ? 'https' : 'http';
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const response = await fetch(`${proto}://${addr}`, {
+        signal: controller.signal,
+        redirect: 'manual',
+      });
+      clearTimeout(timer);
+      res.json({ status: response.status });
+    } catch (err) {
+      clearTimeout(timer);
+      let code = 'ERROR';
+      if (err.name === 'AbortError')              code = 'TIMEOUT';
+      else if (err.cause?.code === 'ECONNREFUSED') code = 'REFUSED';
+      else if (err.cause?.code === 'ECONNRESET')   code = 'RESET';
+      else if (err.cause?.code === 'ENOTFOUND')    code = 'DNS';
+      res.json({ error: code });
+    }
   });
 
   router.get('/metrics', async (req, res) => {

@@ -46,3 +46,70 @@ a.upstream-link:hover code {
   color: #0d6efd;
   background-color: #dce8fd;
 }
+
+/* ── Split preview (upstreams & routes) ───────────────────────── */
+.split-wrapper {
+  display: flex;
+  align-items: stretch;
+  min-height: 75vh;
+}
+
+.split-table-pane {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.split-preview {
+  display: none;
+  flex: 0 0 50%;
+  min-width: 0;
+  flex-direction: column;
+  position: relative;
+  border-left: 2px solid #dee2e6;
+}
+
+.split-wrapper.is-split .split-preview {
+  display: flex;
+}
+
+.split-preview-iframe {
+  flex: 1 1 auto;
+  border: none;
+  min-height: 0;
+}
+
+.split-preview-close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 10;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #adb5bd;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #495057;
+}
+
+.split-preview-close:hover {
+  background: #f8d7da;
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+body.has-split-preview .container {
+  max-width: 100%;
+}
+
+/* ── Upstream live status column ──────────────────────────────── */
+td[data-upstream-addr] {
+  min-width: 6rem;
+  text-align: center;
+}

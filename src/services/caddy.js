@@ -100,6 +100,39 @@ export function tcpCheck(host, port, timeoutMs = 3000) {
   });
 }
 
+// Returns map: bare dial address → 'https' | 'http'
+// Presence of transport.tls on a reverse_proxy handler → https for all its upstreams.
+// An explicit scheme in the dial string (https://) also maps to https.
+export function extractTransportProtocols(serversConfig) {
+  const map = {};
+
+  function walk(handlers) {
+    for (const h of (handlers || [])) {
+      if (h.upstreams) {
+        const tlsTransport = h.transport?.tls !== undefined;
+        for (const u of h.upstreams) {
+          if (!u.dial) continue;
+          const schemeMatch = u.dial.match(/^(\w+):\/\/(.*)/);
+          if (schemeMatch) {
+            const proto = schemeMatch[1] === 'https' ? 'https' : 'http';
+            if (!map[schemeMatch[2]]) map[schemeMatch[2]] = proto;
+          } else {
+            if (!map[u.dial]) map[u.dial] = tlsTransport ? 'https' : 'http';
+          }
+        }
+      }
+      if (h.routes) {
+        for (const r of h.routes) walk(r.handle);
+      }
+    }
+  }
+
+  for (const server of Object.values(serversConfig || {})) {
+    for (const route of (server.routes || [])) walk(route.handle);
+  }
+  return map;
+}
+
 // Recursively collect upstream dial addresses from a handlers array,
 // descending into subroute handlers which nest additional routes/handlers.
 function extractUpstreams(handlers) {

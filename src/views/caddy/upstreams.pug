@@ -1,37 +1,52 @@
 extends ../layout
 
 block content
-  h1.mb-4 Caddy Upstreams
+  .split-wrapper(data-link-class='upstream-link')
+    .split-table-pane
+      h1.mb-4 Caddy Upstreams
 
-  if error
-    .alert.alert-warning
-      strong Caddy unreachable:
-      |  #{error}
-  else if upstreams.length === 0
-    p.text-muted No upstreams reported by Caddy.
-  else
-    .table-responsive
-      table.table.table-striped.table-hover.table-sm.sortable
-        thead.table-dark
-          tr
-            th Address
-            th Route
-            th Active Requests
-            th Total Requests
-            th Fails
-            th Status
-        tbody
-          each u in upstreams
-            tr
-              td
-                a.upstream-link(href='http://' + u.address, target='_blank', rel='noopener noreferrer')
-                  code= u.address
-              td= routeMap[u.address] || '—'
-              td= u.num_requests !== undefined ? u.num_requests : '—'
-              td= u.total_requests !== undefined ? u.total_requests : '—'
-              td= u.fails !== undefined ? u.fails : '—'
-              td
-                if u.healthy === false
-                  span.badge.bg-danger DOWN
-                else
-                  span.badge.bg-success UP
+      if error
+        .alert.alert-warning
+          strong Caddy unreachable:
+          |  #{error}
+      else if upstreams.length === 0
+        p.text-muted No upstreams reported by Caddy.
+      else
+        .table-responsive
+          table.table.table-striped.table-hover.table-sm.sortable
+            thead.table-dark
+              tr
+                th Address
+                th Route
+                th Active Requests
+                th Total Requests
+                th Fails
+                th Status
+                th Live
+            tbody
+              each u in upstreams
+                - var uHref = hrefMap[u.address] || 'http://' + u.address
+                - var uProto = uHref.startsWith('https') ? 'https' : 'http'
+                tr
+                  td
+                    a.upstream-link(href=uHref)
+                      code= u.address
+                  td= routeMap[u.address] || '—'
+                  td= u.num_requests !== undefined ? u.num_requests : '—'
+                  td= u.total_requests !== undefined ? u.total_requests : '—'
+                  td= u.fails !== undefined ? u.fails : '—'
+                  td
+                    if u.healthy === false
+                      span.badge.bg-danger DOWN
+                    else
+                      span.badge.bg-success UP
+                  td(data-upstream-addr=u.address, data-upstream-proto=uProto)
+                    span.badge.bg-secondary.live-badge ...
+
+    .split-preview
+      button.split-preview-close(type='button', aria-label='Close preview') ×
+      iframe.split-preview-iframe(src='about:blank', title='Upstream preview')
+
+block scripts
+  script(src='/public/js/split-preview.js')
+  script(src='/public/js/upstream-status.js')
