@@ -23,13 +23,30 @@ export default function (db) {
   });
 
   router.get('/upstreams', async (req, res) => {
-    const { data: upstreams, error } = await caddy.getUpstreams();
+    const [{ data: upstreams, error }, { data: servers }] = await Promise.all([
+      caddy.getUpstreams(),
+      caddy.getServers(),
+    ]);
+
+    // Build map: upstream dial address → first label of matched host
+    const routeMap = {};
+    if (servers) {
+      for (const { route, upstreams: dials } of caddy.extractRoutes(servers)) {
+        const host = route.match?.[0]?.host?.[0];
+        const label = host ? host.split('.')[0] : null;
+        for (const dial of dials) {
+          if (label && !routeMap[dial]) routeMap[dial] = label;
+        }
+      }
+    }
+
     const flash = req.session.flash;
     delete req.session.flash;
     res.render('caddy/upstreams', {
       title: 'Caddy Upstreams',
       user: req.session.user,
       upstreams: Array.isArray(upstreams) ? upstreams : [],
+      routeMap,
       error,
       flash,
     });

@@ -15,6 +15,7 @@ block content
         thead.table-dark
           tr
             th Address
+            th Route
             th Active Requests
             th Total Requests
             th Fails
@@ -23,7 +24,9 @@ block content
           each u in upstreams
             tr
               td
-                code= u.address
+                a.upstream-link(href='http://' + u.address, target='_blank', rel='noopener noreferrer')
+                  code= u.address
+              td= routeMap[u.address] || '—'
               td= u.num_requests !== undefined ? u.num_requests : '—'
               td= u.total_requests !== undefined ? u.total_requests : '—'
               td= u.fails !== undefined ? u.fails : '—'

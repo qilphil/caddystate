@@ -37,3 +37,12 @@ th[data-sort-dir='desc']::after {
   content: ' \2193';
   opacity: 1;
 }
+
+a.upstream-link {
+  text-decoration: none;
+}
+
+a.upstream-link:hover code {
+  color: #0d6efd;
+  background-color: #dce8fd;
+}
